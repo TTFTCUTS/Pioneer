@@ -16,12 +16,13 @@ import java.util.*;
 import java.util.zip.ZipOutputStream;
 
 public class MapJob {
-    public static final DateTimeFormatter DATE_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd_HH:mm:ss");
+    public static final DateTimeFormatter DATE_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd_HHmmss");
 
     protected Queue<MapTile> tileQueue;
 
     public final World world;
     public final BiomeProvider provider;
+    public final String filename;
 
     protected File file;
     protected ZipOutputStream zip;
@@ -40,6 +41,8 @@ public class MapJob {
         int offset = (int)Math.floor(tileworldsize * (tilerange / 2.0));
         this.jobsize = tilerange * tilerange;
 
+        this.filename = this.world.getWorldInfo().getWorldName() +"_"+ LocalDateTime.now().format(DATE_FORMAT) + ".zip"; //.pioneer
+
         for (int ix = 0; ix<tilerange; ix++) {
             for (int iz = 0; iz<tilerange; iz++) {
 
@@ -53,9 +56,7 @@ public class MapJob {
                 Pioneer.SAVE_PATH.mkdir();
             }
 
-            String filename = this.world.getWorldInfo().getWorldName() +"_"+ LocalDateTime.now().format(DATE_FORMAT) + ".zip"; //.pioneer
-
-            this.file = new File(Pioneer.SAVE_PATH, filename);
+            this.file = new File(Pioneer.SAVE_PATH, this.filename);
             this.zip = new ZipOutputStream(new FileOutputStream(this.file));
 
         } catch (Exception e) {
@@ -65,7 +66,7 @@ public class MapJob {
     }
 
     public void process() {
-        Pioneer.logger.info("processing: "+this.getCompletionPercent()+"%");
+        Pioneer.logger.info("Pioneer: "+ this.filename +": "+ this.getCompletionPercent(false) +"%");
         try {
             if (!this.tileQueue.isEmpty()) {
                 MapTile t = this.tileQueue.poll();
@@ -95,11 +96,11 @@ public class MapJob {
         }
     }
 
-    public double getCompletion() {
-        return (this.jobsize - this.tileQueue.size()) / (double)this.jobsize;
+    public double getCompletion(boolean offset) {
+        return ((this.jobsize - this.tileQueue.size()) - (offset? 1 : 0)) / (double)this.jobsize;
     }
 
-    public int getCompletionPercent() {
-        return (int)Math.round(this.getCompletion() * 100);
+    public int getCompletionPercent(boolean offset) {
+        return (int)Math.round(this.getCompletion(offset) * 100);
     }
 }
