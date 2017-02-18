@@ -1,0 +1,16 @@
+[
+{
+  "modid": "pioneer",
+  "name": "Pioneer Terrain Survey",
+  "description": "A large scale biome mapping utility.",
+  "version": "${version}",
+  "mcversion": "${mcversion}",
+  "url": "",
+  "updateUrl": "",
+  "authorList": ["TTFTCUTS"],
+  "credits": "",
+  "logoFile": "",
+  "screenshots": [],
+  "dependencies": []
+}
+]
