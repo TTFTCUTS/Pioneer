@@ -1,0 +1,8 @@
+commands.pioneer.usage=/pioneer <radius> [<scale>] [<centerX> <centerZ>]
+commands.pioneer.singleplayeronly=Pioneer can only be used in single player.
+commands.pioneer.busy=Pioneer is currently mapping a region. Please wait for completion before starting another.
+commands.pioneer.numbers=Invalid number format. All arguments must be integers.
+commands.pioneer.positive=Invalid radius or scale. Radius and scale must both be positive.
+commands.pioneer.start=Region mapping started over %s tile(s). Game simulation will be very slow until completion.
+commands.pioneer.finish=Region mapping complete. %s tile(s) completed in %s seconds.
+commands.pioneer.paused=PAUSED

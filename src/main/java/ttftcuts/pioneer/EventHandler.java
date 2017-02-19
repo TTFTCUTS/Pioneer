@@ -3,6 +3,8 @@ package ttftcuts.pioneer;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.client.gui.ScaledResolution;
+import net.minecraft.client.renderer.GlStateManager;
+import net.minecraft.client.resources.I18n;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.client.event.RenderGameOverlayEvent;
 import net.minecraftforge.fml.client.config.GuiUtils;
@@ -36,6 +38,7 @@ public class EventHandler {
         Minecraft mc = Minecraft.getMinecraft();
 
         mc.getTextureManager().bindTexture(workingTexture);
+        GlStateManager.resetColor();
 
         int frame = (int)(Minecraft.getSystemTime() / 500) % 4;
         int offset = 32 * frame;
@@ -47,5 +50,9 @@ public class EventHandler {
 
         font.drawString(text, 5 + 16 - font.getStringWidth(text)/2, 39, 0xFFFFFF, true);
 
+        if (mc.isGamePaused()) {
+            text = I18n.format("commands.pioneer.paused");
+            font.drawString(text, 5 + 16 - font.getStringWidth(text)/2, 49, 0xFF3333, true);
+        }
     }
 }

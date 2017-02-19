@@ -1,6 +1,7 @@
 package ttftcuts.pioneer.map;
 
 import net.minecraft.client.Minecraft;
+import net.minecraft.util.text.TextComponentTranslation;
 import net.minecraft.world.World;
 import net.minecraft.world.biome.BiomeProvider;
 import net.minecraftforge.common.DimensionManager;
@@ -28,6 +29,7 @@ public class MapJob {
     protected ZipOutputStream zip;
 
     public int jobsize = 0;
+    protected long startTime;
 
     public MapJob(World world, int x, int z, int radius, int skip) {
         this.world = world;
@@ -35,7 +37,7 @@ public class MapJob {
 
         this.tileQueue = new LinkedList<MapTile>();
 
-        int tilerange = (int)Math.ceil(((radius*2) / skip) / Pioneer.TILE_SIZE);
+        int tilerange = (int)Math.ceil(((radius*2) / (double)skip) / (double)Pioneer.TILE_SIZE);
 
         int tileworldsize = Pioneer.TILE_SIZE * skip;
         int offset = (int)Math.floor(tileworldsize * (tilerange / 2.0));
@@ -43,10 +45,12 @@ public class MapJob {
 
         this.filename = this.world.getWorldInfo().getWorldName() +"_"+ LocalDateTime.now().format(DATE_FORMAT) + ".zip"; //.pioneer
 
+        Pioneer.logger.info("Pioneer: new mapping job: "+radius+" radius, "+x+","+z+" at scale "+skip+". "+this.jobsize+" tiles");
+
         for (int ix = 0; ix<tilerange; ix++) {
             for (int iz = 0; iz<tilerange; iz++) {
 
-                MapTile t = new MapTile(ix+"_"+iz, tileworldsize * ix - offset, tileworldsize * iz - offset, skip);
+                MapTile t = new MapTile(ix+"_"+iz, x + tileworldsize * ix - offset, z + tileworldsize * iz - offset, skip);
                 this.tileQueue.add(t);
             }
         }
@@ -63,6 +67,9 @@ public class MapJob {
             e.printStackTrace();
             this.endJob(true);
         }
+
+        this.startTime = new Date().getTime();
+        Minecraft.getMinecraft().thePlayer.addChatMessage(new TextComponentTranslation("commands.pioneer.start", this.jobsize));
     }
 
     public void process() {
@@ -93,6 +100,10 @@ public class MapJob {
         }
         if(cancel) {
             this.file.delete();
+        } else {
+            long time = (new Date().getTime() - this.startTime) / 1000;
+
+            Minecraft.getMinecraft().thePlayer.addChatMessage(new TextComponentTranslation("commands.pioneer.finish", this.jobsize, time));
         }
     }
 
