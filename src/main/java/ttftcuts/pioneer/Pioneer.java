@@ -1,6 +1,7 @@
 package ttftcuts.pioneer;
 
 import net.minecraft.client.Minecraft;
+import net.minecraft.init.Blocks;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.event.FMLInitializationEvent;
@@ -9,6 +10,7 @@ import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
 import net.minecraftforge.fml.common.event.FMLServerStartingEvent;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import ttftcuts.pioneer.map.MapColours;
 import ttftcuts.pioneer.map.MapJob;
 
 import java.io.File;
@@ -25,6 +27,7 @@ public class Pioneer
     public static final Logger logger = LogManager.getLogger(MODID);
 
     public static MapJob currentJob = null;
+    public static MapColours mapColours;
 
     @Mod.Instance(MODID)
     public static Pioneer instance;
@@ -44,6 +47,7 @@ public class Pioneer
     @Mod.EventHandler
     public void postInit(FMLPostInitializationEvent event) {
         MinecraftForge.EVENT_BUS.register(new EventHandler());
+        mapColours = new MapColours();
     }
 
     @Mod.EventHandler

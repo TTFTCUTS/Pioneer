@@ -54,7 +54,7 @@ public class MapTile {
     }
 
     public void save(ZipOutputStream zip) throws IOException {
-        ZipEntry entry = new ZipEntry(this.filename+".png");
+        ZipEntry entry = new ZipEntry("tiles/"+this.filename+".png");
         zip.putNextEntry(entry);
 
         ImageIO.write(this.biomeMap, "png", zip);
