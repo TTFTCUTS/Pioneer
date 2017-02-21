@@ -22,6 +22,12 @@ void main() {
 
 	canvasElement = querySelector("#canvas");
 	canvas = canvasElement.context2D;
+
+	canvasElement.addEventListener("mousemove", (MouseEvent e) {
+		if (map != null) {
+			map.mouseOver(e);
+		}
+	});
 }
 
 void loadMapFile(Event e) {

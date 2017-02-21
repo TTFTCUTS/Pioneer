@@ -33,9 +33,13 @@ public class CommandPioneer extends CommandBase {
             BlockPos pos;
 
             if (args.length == 1) {
-                // radius only
-                pos = sender.getPosition();
-                this.doCommand(sender, args[0], "1", pos.getX()+"", pos.getZ()+"");
+                if (args[0].equals("stop")) {
+                    throw new CommandException("commands.pioneer.nojob");
+                } else {
+                    // radius only
+                    pos = sender.getPosition();
+                    this.doCommand(sender, args[0], "1", pos.getX() + "", pos.getZ() + "");
+                }
             } else if (args.length == 2) {
                 // radius and scale
                 pos = sender.getPosition();
@@ -53,8 +57,14 @@ public class CommandPioneer extends CommandBase {
             }
 
         } else {
-            // say no
-            notifyCommandListener(sender, this, "commands.pioneer.busy");
+            if (args.length == 1 && args[0].equals("stop")) {
+                // cancel
+                Pioneer.currentJob.endJob(true);
+                notifyCommandListener(sender, this, "commands.pioneer.stop");
+            } else {
+                // say no
+                notifyCommandListener(sender, this, "commands.pioneer.busy");
+            }
         }
     }
 

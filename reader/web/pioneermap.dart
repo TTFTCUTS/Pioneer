@@ -6,6 +6,9 @@ class PioneerMap {
 
 	List<MapTile> tiles = [];
 
+	int xpos = 0;
+	int zpos = 0;
+
 	PioneerMap(Archive archive) {
 		ArchiveFile mapinfofile = archive.findFile("map.json");
 		ArchiveFile biomeinfofile = archive.findFile("biomes.json");
@@ -34,6 +37,13 @@ class PioneerMap {
 	void destroy() {
 
 	}
+
+	void mouseOver(MouseEvent e) {
+		int x = (e.offset.x - mapInfo.mapOffsetX ) * mapInfo.skip + mapInfo.offsetX;
+		int z = (e.offset.y - mapInfo.mapOffsetZ ) * mapInfo.skip + mapInfo.offsetZ;
+
+		querySelector("#output").innerHtml= "$x, $z";
+	}
 }
 
 class MapInfo {
@@ -50,6 +60,8 @@ class MapInfo {
 	int skip = 1;
 	int jobSize = 0;
 	int tileRange = 0;
+	int mapOffsetX;
+	int mapOffsetZ;
 
 	MapInfo(dynamic mapjson) {
 		this.name = mapjson["worldname"];
@@ -68,6 +80,10 @@ class MapInfo {
 
 		print("$name (dim $dimension, $dimensionType, $generatorName v$generatorVersion), seed: $seed");
 		print("$jobSize tiles, $tileRange x $tileRange (radius $radius, scale $skip)");
+		print("origin offset: $offsetX,$offsetZ");
+
+		this.mapOffsetX = (((MapTile.TILESIZE * tileRange) )~/2);
+		this.mapOffsetZ = (((MapTile.TILESIZE * tileRange) )~/2);
 	}
 }
 
@@ -138,8 +154,8 @@ class Biome {
 		this.green = (col & 0x00FF00) >> 8;
 		this.blue = (col & 0x0000FF);
 
-		print("$name: $colour -> $col: $red,$green,$blue");
-		print("red: ${col & 0xFF0000} >> 16 = ${(col & 0xFF0000) >> 16}");
+		//print("$name: $colour -> $col: $red,$green,$blue");
+		//print("red: ${col & 0xFF0000} >> 16 = ${(col & 0xFF0000) >> 16}");
 	}
 }
 
@@ -157,7 +173,7 @@ class MapTile {
 	void draw(CanvasRenderingContext2D canvas, int ox, int oz, BiomeInfo biomes) {
 		ImageData img = canvas.getImageData(ox,oz,TILESIZE,TILESIZE);
 
-		print("############################");
+		//print("############################");
 		for (int x=0; x<TILESIZE; x++) {
 			for (int z=0; z<TILESIZE; z++) {
 				int index = (z*TILESIZE+x)*4;
