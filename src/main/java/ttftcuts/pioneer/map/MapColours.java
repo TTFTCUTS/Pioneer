@@ -50,6 +50,7 @@ public class MapColours {
 
     public int getBiomeMapColourRaw(Biome biome) {
 
+        boolean treebased = false;
         int colour = this.getBlockColourRaw(biome.topBlock);
 
         if (biome.topBlock == Blocks.GRASS.getDefaultState()) { // uuuugh
@@ -59,11 +60,13 @@ public class MapColours {
 
         if (BiomeDictionary.isBiomeOfType(biome, BiomeDictionary.Type.FOREST)) {
             colour = blend(biome.getFoliageColorAtPos(BlockPos.ORIGIN), 0xff0b7000, 0.35);
+            treebased = true;
         }
 
         if (biome.theBiomeDecorator.treesPerChunk > 5) {
             colour = blend(colour, 0xff0b7000, 0.25);
             colour = brightness(colour, 0.9);
+            treebased = true;
         }
 
         if (BiomeDictionary.isBiomeOfType(biome, BiomeDictionary.Type.RIVER)
@@ -71,14 +74,21 @@ public class MapColours {
             colour = blend(colour, 0xff4582ff, 0.7); // sea blue
         }
 
-        if (biome.isSnowyBiome()) {
-            colour = intAverage(colour, 0xffeffdff); // icy pale cyan
-            colour = intAverage(colour, 0xffc9e4ff);
-        }
-
         if (biome.getBaseHeight() > 0.0) {
             double mod = Math.min(biome.getBaseHeight() * 0.2 + 1.0, 1.35);
             colour = brightness(colour, mod);
+        } else if (biome.getBaseHeight() <= -1.2) {
+            colour = brightness(colour, 0.9);
+        }
+
+        if (treebased) {
+            colour = temptint(colour, biome.getTemperature());
+        }
+
+        if (biome.isSnowyBiome()) {
+            colour = blend(colour, 0xffffffff, 0.5); // icy pale cyan
+            //colour = blend(colour, 0xffc9e4ff, 0.25);
+            colour = brightness(colour, 1.2);
         }
 
         return colour | 0xFF000000;
@@ -180,6 +190,21 @@ public class MapColours {
         r = (int)Math.min(255,Math.floor(r * light));
         g = (int)Math.min(255,Math.floor(g * light));
         b = (int)Math.min(255,Math.floor(b * light));
+
+        return (r << 16) | (g << 8) | (b) | 0xFF000000;
+    }
+
+    public static int temptint(int col, double temp) {
+        int r = (col & 0x00FF0000) >> 16;
+        int g = (col & 0x0000FF00) >> 8;
+        int b = (col & 0x000000FF);
+
+        double limit = 0.25;
+        double factor = Math.max(-limit, Math.min(limit, (temp - 0.4) * 0.75));
+
+        r = (int)Math.min(255,Math.floor(r * (1+factor)));
+        g = (int)Math.min(255,Math.floor(g * (1+factor * 0.5)));
+        b = (int)Math.min(255,Math.floor(b * (1-factor * 2.5)));
 
         return (r << 16) | (g << 8) | (b) | 0xFF000000;
     }
