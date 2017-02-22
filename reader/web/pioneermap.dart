@@ -1,10 +1,12 @@
 part of Pioneer;
 
 class PioneerMap {
+	static const int BORDER = 20;
+
 	MapInfo mapInfo;
 	BiomeInfo biomeInfo;
 
-	List<MapTile> tiles = [];
+	List<MapTile> tiles;
 
 	int xpos = 0;
 	int zpos = 0;
@@ -21,6 +23,8 @@ class PioneerMap {
 
 		int n = this.mapInfo.tileRange;
 
+		this.tiles = new List<MapTile>(n*n);
+
 		for (int x = 0; x<n; x++) {
 			for (int z = 0; z<n; z++) {
 				ArchiveFile f = archive.findFile("tiles/${x}_${z}.png");
@@ -28,8 +32,7 @@ class PioneerMap {
 				Image image = decodePng(f.content);
 
 				MapTile tile = new MapTile(image.getBytes(), x,z);
-				this.tiles.add(tile);
-				tile.draw(canvas, MapTile.TILESIZE * x, MapTile.TILESIZE * z, this.biomeInfo);
+				this.tiles[z * n + x] = tile;
 			}
 		}
 	}
@@ -39,10 +42,104 @@ class PioneerMap {
 	}
 
 	void mouseOver(MouseEvent e) {
-		int x = (e.offset.x - mapInfo.mapOffsetX ) * mapInfo.skip + mapInfo.offsetX;
-		int z = (e.offset.y - mapInfo.mapOffsetZ ) * mapInfo.skip + mapInfo.offsetZ;
+		int wx = (e.offset.x - mapInfo.mapOffsetX - xpos) * mapInfo.skip + mapInfo.offsetX;
+		int wz = (e.offset.y - mapInfo.mapOffsetZ - zpos) * mapInfo.skip + mapInfo.offsetZ;
 
-		querySelector("#output").innerHtml= "$x, $z";
+		Biome b = this.getBiome(e.offset.x,e.offset.y);
+
+		String info = "$wx, $wz";
+
+		if (b != null) {
+			info += " ${b.name}";
+		}
+
+		querySelector("#output").innerHtml= info;
+	}
+
+	draw() {
+		this.moveTo(this.xpos, this.zpos);
+		int n = this.mapInfo.tileRange;
+
+		int size = n * MapTile.TILESIZE;
+		int wwidth = canvasElement.width;
+		int wheight = canvasElement.height;
+
+		int xlower = max(0, ((-xpos) / MapTile.TILESIZE).floor());
+		int xupper = min(n, ((wwidth - xpos) / MapTile.TILESIZE).ceil());
+
+		int zlower = max(0, ((-zpos) / MapTile.TILESIZE).floor());
+		int zupper = min(n, ((wheight - zpos) / MapTile.TILESIZE).ceil());
+
+		//int t = 0;
+		for (int x = xlower; x<xupper; x++) {
+			for (int z = zlower; z<zupper; z++) {
+				int id = z * this.mapInfo.tileRange + x;
+
+				tiles[id].draw(canvas, MapTile.TILESIZE * x + this.xpos, MapTile.TILESIZE * z + this.zpos, this.biomeInfo);
+				//t++;
+			}
+		}
+		//print("tiles drawn: $t");
+	}
+
+	void moveTo(int x, int z) {
+		//print("move to $x,$z");
+
+		int size = this.mapInfo.tileRange * MapTile.TILESIZE;
+		int wwidth = canvasElement.width;
+		int wheight = canvasElement.height;
+
+		// x position;
+		if (wwidth >= size + BORDER * 2) {
+			this.xpos = (wwidth - size) ~/ 2;
+		} else {
+			int maxx = BORDER;
+			int minx = wwidth - (BORDER + size);
+
+			this.xpos = x.clamp(minx, maxx);
+		}
+
+		// z position;
+		if (wheight >= size + BORDER * 2) {
+			this.zpos = (wheight - size) ~/ 2;
+		} else {
+			int maxz = BORDER;
+			int minz = wheight - (BORDER + size);
+
+			this.zpos = z.clamp(minz, maxz);
+		}
+	}
+
+	Point<int> getTileCoords(int x, int z) {
+		int tx = (x - this.xpos) ~/ MapTile.TILESIZE;
+		int tz = (z - this.zpos) ~/ MapTile.TILESIZE;
+
+		return new Point<int>(tx,tz);
+	}
+
+	MapTile getTile(int tileX, int tileZ) {
+		int size = this.mapInfo.tileRange;
+
+		if (tileX >= 0 && tileX < size && tileZ >= 0 && tileZ < size ) {
+			return this.tiles[tileZ*size + tileX];
+		}
+
+		return null;
+	}
+
+	Biome getBiome(int x, int z) {
+		Point<int> c = this.getTileCoords(x,z);
+
+		MapTile tile = this.getTile(c.x, c.y);
+
+		if (tile == null) {
+			return null;
+		}
+
+		int tx = x - this.xpos - c.x * MapTile.TILESIZE;
+		int tz = z - this.zpos - c.y * MapTile.TILESIZE;
+
+		return tile.getBiome(tx,tz, this.biomeInfo);
 	}
 }
 
@@ -98,7 +195,7 @@ class BiomeInfo {
 			if (id == -1) {continue;}
 
 			var data = biomejson[key];
-			Biome b = new Biome(id, data);
+			Biome b = new Biome(id, data, this);
 			biomes[id] = b;
 			biomesByName[b.name] = b;
 		}
@@ -106,8 +203,11 @@ class BiomeInfo {
 }
 
 class Biome {
+	static const double BRIGHTEN = 2.0;
+
 	int id;
 	String name;
+	BiomeInfo parent;
 
 	String colour;
 	int red = 127;
@@ -124,7 +224,7 @@ class Biome {
 	bool mutation = false;
 	int mutationOf = -1;
 
-	Biome(int this.id, Map biomedata) {
+	Biome(int this.id, Map biomedata, BiomeInfo this.parent) {
 		this.name = biomedata["name"];
 		this.colour = biomedata["colour"];
 		this.baseHeight = biomedata["height"];
@@ -134,14 +234,15 @@ class Biome {
 		this.snowy = biomedata["snow"];
 		this.canRain = biomedata["rain"];
 
-		this.mutation = biomedata["mutation"];
+		this.mutation = biomedata["ismutation"];
 		if (this.mutation) {
 			this.mutationOf = biomedata["mutationof"];
 		}
 
 		this.parseColour();
 
-		//print("$id - $name: temp: $temperature, moisture: $moisture, height: $baseHeight~$heightVariation, rain: $canRain, snow: $snowy");
+		print("$id - $name: temp: $temperature, moisture: $moisture, height: $baseHeight~$heightVariation, rain: $canRain, snow: $snowy");
+		print("Mutation: $mutation , of $mutationOf");
 	}
 
 	void parseColour() {
@@ -156,6 +257,24 @@ class Biome {
 
 		//print("$name: $colour -> $col: $red,$green,$blue");
 		//print("red: ${col & 0xFF0000} >> 16 = ${(col & 0xFF0000) >> 16}");
+	}
+
+	List<int> fillColour(int x, int z) {
+		if (this.mutation) {
+			if ((x+z) % 5 == 0) { //((x+z)~/2) %2 == 0
+				Biome mof = this.parent.biomes[this.mutationOf];
+
+				int r = 255 - mof.red;//(mof.red * BRIGHTEN).clamp(0,255).floor();
+				int g = 255 - mof.green;//(mof.green * BRIGHTEN).clamp(0,255).floor();
+				int b = 255 - mof.blue;//(mof.blue * BRIGHTEN).clamp(0,255).floor();
+
+				return [r,g,b];
+
+				//return [255,0,0];
+			}
+		}
+
+		return [red,green,blue];
 	}
 }
 
@@ -181,15 +300,23 @@ class MapTile {
 				int id = this.data[index];
 				Biome b = biomes.biomes[id];
 
-				//print("[$tilex,$tilez]: $index $x,$z: $id");// - ${b.name}");
+				var col = b.fillColour(x,z);
 
-				img.data[index] = b.red;
-				img.data[index+1] = b.green;
-				img.data[index+2] = b.blue;
+				img.data[index] = col[0];
+				img.data[index+1] = col[1];
+				img.data[index+2] = col[2];
 				img.data[index+3] = 255;
 			}
 		}
 
 		canvas.putImageData(img, ox,oz);
+	}
+
+	Biome getBiome(int x, int z, BiomeInfo biomes) {
+		int index = (z*TILESIZE+x)*4;
+
+		int id = this.data[index];
+		Biome b = biomes.biomes[id];
+		return b;
 	}
 }

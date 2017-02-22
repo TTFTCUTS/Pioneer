@@ -6,8 +6,34 @@ html, body {
     margin: 0;
     padding: 0;
     font-family: 'Roboto', sans-serif;
+    position:relative;
+
+    background-color:#232025;
+    cursor:"default";
 }
 
 #canvas {
     cursor:crosshair;
+}
+
+#flex {
+    position:relative;
+    display:flex;
+    width:100%;
+    height:100%;
+}
+
+#left {
+    flex-grow:1;
+    height:100%;
+    overflow:hidden;
+}
+
+#right {
+    width:250px;
+    background-color:#bbb9bd;
+    height:100%;
+
+    box-sizing:border-box;
+    padding:10px;
 }
