@@ -137,3 +137,30 @@ void mapSetup(Archive archive) {
 
 	redraw();
 }
+
+void sortTable(TableElement table, int column, Comparator<String> comparator, [bool reversed = false]) {
+	bool switching = true;
+	bool shouldSwitch;
+	int i;
+
+	while (switching) {
+		switching = false;
+		List<TableRowElement> rows = table.rows;
+
+		for (i = 0; i < (rows.length - 1); i++) {
+			shouldSwitch = false;
+
+			TableCellElement x = rows[i].cells[column];
+			TableCellElement y = rows[i + 1].cells[column];
+
+			if (comparator(x.innerHtml, y.innerHtml) * (reversed?-1:1) > 0) {
+				shouldSwitch= true;
+				break;
+			}
+		}
+		if (shouldSwitch) {
+			rows[i].parentNode.insertBefore(rows[i + 1], rows[i]);
+			switching = true;
+		}
+	}
+}

@@ -30,10 +30,12 @@ html, body {
 }
 
 #right {
-    width:250px;
+    width:300px;
     background-color:#bbb9bd;
     height:100%;
 
     box-sizing:border-box;
     padding:10px;
+
+    overflow:auto;
 }

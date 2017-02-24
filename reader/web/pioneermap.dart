@@ -33,8 +33,16 @@ class PioneerMap {
 
 				MapTile tile = new MapTile(image.getBytes(), x,z);
 				this.tiles[z * n + x] = tile;
+
+				for (int i=0; i<tile.data.length; i+=4) {
+					this.biomeInfo.countBiome(tile.data[i]);
+				}
 			}
 		}
+
+		Element out = querySelector("#stats");
+		out.innerHtml = "";
+		out.append(this.biomeInfo.makeBiomeElement(this));
 	}
 
 	void destroy() {
@@ -188,6 +196,15 @@ class BiomeInfo {
 	Map<int, Biome> biomes = new HashMap<int, Biome>();
 	Map<String, Biome> biomesByName = new HashMap<String, Biome>();
 
+	Map<Biome, BiomeStats> statistics = new HashMap<Biome, BiomeStats>();
+
+	static Comparator<String> compare_percent = (String a, String b) {
+		double pa = double.parse(a.substring(0, a.length-1));
+		double pb = double.parse(b.substring(0, b.length-1));
+
+		return pb.compareTo(pa);
+	};
+
 	BiomeInfo(Map biomejson) {
 
 		for (String key in biomejson.keys) {
@@ -200,6 +217,56 @@ class BiomeInfo {
 			biomesByName[b.name] = b;
 		}
 	}
+
+	void countBiome(int id) {
+		Biome b = this.biomes[id];
+		Biome category = b;
+
+		if (b.mutation) {
+			category = biomes[b.mutationOf];
+		}
+
+		if (!statistics.containsKey(category)) {
+			statistics[category] = new BiomeStats();
+		}
+
+		BiomeStats stats = statistics[category];
+
+		stats.count++;
+
+		if (!stats.subcounts.containsKey(b)) {
+			stats.subcounts[b] = 0;
+		}
+
+		stats.subcounts[b]++;
+	}
+
+	Element makeBiomeElement(PioneerMap map) {
+		TableElement element = new TableElement();
+
+		int divisor = map.mapInfo.tileRange * MapTile.TILESIZE;
+		divisor *= divisor;
+
+		for (Biome b in this.statistics.keys) {
+			BiomeStats stats = this.statistics[b];
+
+			TableRowElement row = element.addRow();
+
+			row.addCell()..innerHtml = "${b.id}";
+			row.addCell()..innerHtml = "${b.name}";
+			row.addCell()..innerHtml = "${((stats.count / divisor) * 100).toStringAsFixed(2)}%";
+		}
+
+		sortTable(element, 2, compare_percent);
+
+		return element;
+	}
+}
+
+class BiomeStats {
+	int count = 0;
+
+	Map<Biome, int> subcounts = {};
 }
 
 class Biome {
