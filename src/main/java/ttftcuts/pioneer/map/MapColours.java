@@ -13,35 +13,45 @@ import net.minecraft.client.shader.Framebuffer;
 import net.minecraft.init.Blocks;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.world.World;
 import net.minecraft.world.biome.Biome;
+import net.minecraft.world.chunk.ChunkPrimer;
+import net.minecraft.world.gen.NoiseGeneratorPerlin;
 import net.minecraftforge.common.BiomeDictionary;
+import net.minecraftforge.fml.relauncher.ReflectionHelper;
 import org.lwjgl.opengl.GL11;
 import ttftcuts.pioneer.Pioneer;
+import ttftcuts.pioneer.util.DummyChunkPrimer;
+import ttftcuts.pioneer.util.ReflectionUtil;
 
+import java.lang.reflect.Method;
 import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 
 public class MapColours {
     public static MapColours instance;
-    public static void init() {
-        instance = new MapColours();
-    }
 
     public Map<IBlockState, Integer> blockColours = new HashMap<IBlockState, Integer>();
     public Map<Biome, Integer> biomeColours = new HashMap<Biome, Integer>();
-    public Framebuffer framebuffer;
 
-    public MapColours() {
-        //this.framebuffer = new Framebuffer(16,16,false);
-        //this.framebuffer.unbindFramebuffer();
-    }
+    public Random rand = new Random(50);
+    public NoiseGeneratorPerlin groundNoise = new NoiseGeneratorPerlin(this.rand, 4);
+    public ChunkPrimer dummyPrimer = new DummyChunkPrimer();
+
+    public static final String[] topBlockMethod = new String[] {"a", "func_180622_a", "genTerrainBlocks"};
+    public static final Class[] topBlockArgs = new Class[] {World.class, Random.class, ChunkPrimer.class, int.class, int.class, double.class};
+    public static final String[] grassColourMethod = new String[] {"b", "func_180627_b", "getGrassColorAtPos"};
+    public static final Class[] grassColourArgs = new Class[] {BlockPos.class};
+
+    public MapColours() {}
 
     public int getBiomeMapColour(Biome biome) {
-        /*if (biomeColours.containsKey(biome)) {
+        if (biomeColours.containsKey(biome)) {
             return biomeColours.get(biome);
-        }*/
+        }
 
         int colour = getBiomeMapColourRaw(biome);
         biomeColours.put(biome, colour);
@@ -51,22 +61,26 @@ public class MapColours {
     public int getBiomeMapColourRaw(Biome biome) {
 
         boolean treebased = false;
-        int colour = this.getBlockColourRaw(biome.topBlock);
-
-        if (biome.topBlock == Blocks.GRASS.getDefaultState()) { // uuuugh
-            int tint = biome.getGrassColorAtPos(BlockPos.ORIGIN) | 0xFF000000;
-            colour = blend(colour,tint, 0.75);
-        }
+        int colour = this.getTopColour(biome);
 
         if (BiomeDictionary.isBiomeOfType(biome, BiomeDictionary.Type.FOREST)) {
             colour = blend(biome.getFoliageColorAtPos(BlockPos.ORIGIN), 0xff0b7000, 0.35);
             treebased = true;
         }
 
-        if (biome.theBiomeDecorator.treesPerChunk > 5) {
+        /*if (biome.theBiomeDecorator.treesPerChunk > 5) {
             colour = blend(colour, 0xff0b7000, 0.25);
             colour = brightness(colour, 0.9);
             treebased = true;
+        }*/
+
+        int trees = biome.theBiomeDecorator.treesPerChunk;
+        if (trees > 0) {
+            colour = blend(colour, 0xff0b7000, Math.min(0.25, trees * 0.025));
+            colour = brightness(colour, 1.0 - Math.min(0.1, trees * 0.015));
+            if (trees >= 4) {
+                treebased = true;
+            }
         }
 
         if (BiomeDictionary.isBiomeOfType(biome, BiomeDictionary.Type.RIVER)
@@ -92,6 +106,83 @@ public class MapColours {
         }
 
         return colour | 0xFF000000;
+    }
+
+    public int getTopColour(Biome biome) {
+
+        BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos(0,64,0);
+
+        boolean topOverridden = false;
+        boolean grassOverridden = false;
+
+        try {
+            Method top = ReflectionUtil.<Biome>findMethod(biome, topBlockMethod, topBlockArgs);
+            topOverridden = top.getDeclaringClass() != Biome.class;
+
+            Method grass = ReflectionUtil.<Biome>findMethod(biome, grassColourMethod, grassColourArgs);
+            grassOverridden = grass.getDeclaringClass() != Biome.class;
+
+            Pioneer.logger.info(biome.getClass()+" declaring class of block method: "+ top.getDeclaringClass() +", grass method: "+grass.getDeclaringClass());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        if (topOverridden || grassOverridden) {
+            Pioneer.logger.info(biome.getBiomeName() +" overrides:  top block: "+topOverridden+", grass colour: "+grassOverridden);
+
+            int rad = 50;
+            int size = (rad*2+1);
+            int divisor = size*size;
+
+            int r = 0;
+            int g = 0;
+            int b = 0;
+
+            double[] noise = new double[divisor];
+            if (topOverridden) {
+                this.rand.setSeed(100);
+                noise = this.groundNoise.getRegion(noise, (double)-rad, (double)-rad, size, size, 0.0625D, 0.0625D, 1.0D);
+            }
+
+            for (int x = -rad; x<= rad; x++) {
+                for (int z = -rad; z<= rad; z++) {
+                    pos.setPos(x,64,z);
+                    if (topOverridden) {
+                        int noiseindex = (z+rad) * size + (x+rad);
+
+                        biome.genTerrainBlocks(Minecraft.getMinecraft().theWorld, this.rand, dummyPrimer, x, z, noise[noiseindex]);
+                    }
+
+                    int col = this.getBiomeBlockColourForCoords(biome, pos);
+
+                    r += (col & 0x00FF0000) >> 16;
+                    g += (col & 0x0000FF00) >> 8;
+                    b += (col & 0x000000FF);
+                }
+            }
+
+            r /= divisor;
+            g /= divisor;
+            b /= divisor;
+
+            return (r << 16) | (g << 8) | (b) | 0xFF000000;
+        } else {
+            return this.getBiomeBlockColourForCoords(biome, pos);
+        }
+    }
+
+    public int getBiomeBlockColourForCoords(Biome biome, BlockPos pos) {
+        int colour;
+
+        if (biome.topBlock == Blocks.GRASS.getDefaultState()) { // uuuugh
+            colour = biome.topBlock.getMapColor().colorValue | 0xFF000000;
+            int tint = biome.getGrassColorAtPos(pos) | 0xFF000000;
+            colour = blend(colour,tint, 0.75);
+        } else {
+            colour = this.getBlockColourRaw(biome.topBlock);
+        }
+
+        return colour;
     }
 
     /*public int getBlockColour(IBlockState block) {

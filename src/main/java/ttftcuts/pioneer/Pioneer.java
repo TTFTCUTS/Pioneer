@@ -57,5 +57,6 @@ public class Pioneer
         if (currentJob != null) {
             currentJob.endJob(true);
         }
+        mapColours.biomeColours.clear();
     }
 }
