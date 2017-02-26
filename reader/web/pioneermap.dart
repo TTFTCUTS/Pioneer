@@ -40,6 +40,8 @@ class PioneerMap {
 			}
 		}
 
+		this.biomeInfo.calcStats(this);
+
 		Element out = querySelector("#stats");
 		out.innerHtml = "";
 		out.append(this.biomeInfo.makeBiomeElement(this));
@@ -197,6 +199,8 @@ class BiomeInfo {
 	Map<String, Biome> biomesByName = new HashMap<String, Biome>();
 
 	Map<Biome, BiomeStats> statistics = new HashMap<Biome, BiomeStats>();
+	int mutationCount = 0;
+	double mutationRate = 0.0;
 
 	static Comparator<String> compare_percent = (String a, String b) {
 		double pa = double.parse(a.substring(0, a.length-1));
@@ -224,6 +228,7 @@ class BiomeInfo {
 
 		if (b.mutation) {
 			category = biomes[b.mutationOf];
+			mutationCount++;
 		}
 
 		if (!statistics.containsKey(category)) {
@@ -241,7 +246,12 @@ class BiomeInfo {
 		stats.subcounts[b]++;
 	}
 
+	void calcStats(PioneerMap map) {
+		this.mutationRate = this.mutationCount / (map.mapInfo.tileRange * map.mapInfo.tileRange * MapTile.TILESIZE * MapTile.TILESIZE);
+	}
+
 	Element makeBiomeElement(PioneerMap map) {
+		DivElement div = new DivElement();
 		TableElement element = new TableElement();
 
 		int divisor = map.mapInfo.tileRange * MapTile.TILESIZE;
@@ -259,7 +269,10 @@ class BiomeInfo {
 
 		sortTable(element, 2, compare_percent);
 
-		return element;
+		div.append(element);
+		div.append(new SpanElement()..innerHtml = "Mutations: ${mutationRate.toStringAsFixed(3)}%");
+
+		return div;
 	}
 }
 
@@ -328,7 +341,7 @@ class Biome {
 
 	List<int> fillColour(int x, int z) {
 		if (this.mutation) {
-			if ((x+z) % 5 == 0) { //((x+z)~/2) %2 == 0
+			if ((x+z) % 4 == 0) { //((x+z)~/2) %2 == 0
 				Biome mof = this.parent.biomes[this.mutationOf];
 
 				int r = 255 - mof.red;//(mof.red * BRIGHTEN).clamp(0,255).floor();
