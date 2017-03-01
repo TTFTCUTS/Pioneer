@@ -45,6 +45,8 @@ class PioneerMap {
 		Element out = querySelector("#stats");
 		out.innerHtml = "";
 		out.append(this.biomeInfo.makeBiomeElement(this));
+
+		resizeCanvas(this.mapInfo.tileRange * MapTile.TILESIZE, this.mapInfo.tileRange * MapTile.TILESIZE);
 	}
 
 	void destroy() {
@@ -67,7 +69,7 @@ class PioneerMap {
 	}
 
 	draw() {
-		this.moveTo(this.xpos, this.zpos);
+		//this.moveTo(this.xpos, this.zpos);
 		int n = this.mapInfo.tileRange;
 
 		int size = n * MapTile.TILESIZE;
@@ -90,34 +92,6 @@ class PioneerMap {
 			}
 		}
 		//print("tiles drawn: $t");
-	}
-
-	void moveTo(int x, int z) {
-		//print("move to $x,$z");
-
-		int size = this.mapInfo.tileRange * MapTile.TILESIZE;
-		int wwidth = canvasElement.width;
-		int wheight = canvasElement.height;
-
-		// x position;
-		if (wwidth >= size + BORDER * 2) {
-			this.xpos = (wwidth - size) ~/ 2;
-		} else {
-			int maxx = BORDER;
-			int minx = wwidth - (BORDER + size);
-
-			this.xpos = x.clamp(minx, maxx);
-		}
-
-		// z position;
-		if (wheight >= size + BORDER * 2) {
-			this.zpos = (wheight - size) ~/ 2;
-		} else {
-			int maxz = BORDER;
-			int minz = wheight - (BORDER + size);
-
-			this.zpos = z.clamp(minz, maxz);
-		}
 	}
 
 	Point<int> getTileCoords(int x, int z) {

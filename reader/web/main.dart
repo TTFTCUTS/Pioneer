@@ -15,6 +15,7 @@ CanvasElement canvasElement;
 CanvasRenderingContext2D canvas;
 
 PioneerMap map;
+DivElement mapContainer;
 bool dragging = false;
 int dragx = 0;
 int dragz = 0;
@@ -28,6 +29,7 @@ void main() {
 
 	canvasElement = querySelector("#canvas");
 	canvas = canvasElement.context2D;
+	mapContainer = querySelector("#left");
 
 	canvasElement.addEventListener("mousemove", (MouseEvent e) {
 		if (map != null) {
@@ -35,25 +37,30 @@ void main() {
 		}
 	});
 
-	canvasElement.addEventListener("mousedown", startDrag);
+	window.addEventListener("resize", resizeWindow);
+
+	mapContainer.addEventListener("mousedown", startDrag);
 	window.addEventListener("mousemove", drag);
 	window.addEventListener("mouseup", endDrag);
-
-	window.addEventListener("resize", (Event e){
-		resize();
-	});
-
-	resize();
 }
 
-void resize() {
-
-	Element box = querySelector("#left");
-
-	canvasElement.width = box.clientWidth;
-	canvasElement.height = box.clientHeight;
+void resizeCanvas(int h, int w) {
+	canvasElement.width = h;
+	canvasElement.height = w;
 
 	redraw();
+}
+
+void resizeWindow([Event e]) {
+	Element container = mapContainer;
+	int cw = container.clientWidth;
+	int ch = container.clientHeight;
+
+	int xdiff = max(0,cw - (canvasElement.width + 20)) ~/ 2;
+	int ydiff = max(0,ch - (canvasElement.height + 18)) ~/ 2;
+
+	canvasElement.style.top = "${ydiff}px";
+	canvasElement.style.left = "${xdiff}px";
 }
 
 void redraw() {
@@ -68,21 +75,26 @@ void clear() {
 }
 
 void startDrag(MouseEvent e) {
-	canvasElement.style.cursor = "all-scroll";
+	mapContainer.style.cursor = "all-scroll";
 	dragging = true;
 	dragx = 0;
 	dragz = 0;
-	if (map != null) {
+	/*if (map != null) {
 		mapdragx = map.xpos;
 		mapdragz = map.zpos;
 	} else {
 		mapdragx = 0;
 		mapdragz = 0;
-	}
+	}*/
+
+	mapdragx = mapContainer.scrollLeft + e.client.x;
+	mapdragz = mapContainer.scrollTop + e.client.y;
+
+	e.preventDefault();
 }
 
 void endDrag(MouseEvent e) {
-	canvasElement.style.cursor = "crosshair";
+	mapContainer.style.cursor = "crosshair";
 	dragging = false;
 	dragx = 0;
 	dragz = 0;
@@ -92,13 +104,13 @@ void endDrag(MouseEvent e) {
 
 void drag(MouseEvent e) {
 	if (dragging) {
-		dragx += e.movement.x;
-		dragz += e.movement.y;
+		dragx = e.client.x;
+		dragz = e.client.y;
 
-		if (map != null) {
-			map.moveTo(mapdragx + dragx, mapdragz + dragz);
-			redraw();
-		}
+		mapContainer
+			..scrollLeft = mapdragx - dragx
+			..scrollTop = mapdragz - dragz;
+
 		window.getSelection().empty();
 		window.getSelection().removeAllRanges();
 	}
@@ -135,6 +147,7 @@ void mapSetup(Archive archive) {
 
 	map = new PioneerMap(archive);
 
+	resizeWindow();
 	redraw();
 }
 
