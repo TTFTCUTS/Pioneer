@@ -42,9 +42,13 @@ class PioneerMap {
 
 		this.biomeInfo.calcStats(this);
 
-		Element out = querySelector("#stats");
-		out.innerHtml = "";
-		out.append(this.biomeInfo.makeBiomeElement(this));
+		querySelector("#mapinfo")
+			..innerHtml = ""
+			..append(this.mapInfo.makeInfoElement(this));
+
+		querySelector("#stats")
+			..innerHtml = ""
+			..append(this.biomeInfo.makeBiomeElement(this));
 
 		resizeCanvas(this.mapInfo.tileRange * MapTile.TILESIZE, this.mapInfo.tileRange * MapTile.TILESIZE);
 	}
@@ -62,7 +66,7 @@ class PioneerMap {
 		String info = "$wx, $wz";
 
 		if (b != null) {
-			info += " ${b.name}";
+			info += "<br/>${b.name}";
 		}
 
 		querySelector("#output").innerHtml= info;
@@ -133,7 +137,7 @@ class MapInfo {
 	String dimensionType;
 	String seed;
 	String generatorName;
-	String generatorVersion;
+	int generatorVersion;
 	String generatorOptions;
 	int offsetX = 0;
 	int offsetZ = 0;
@@ -165,6 +169,23 @@ class MapInfo {
 
 		this.mapOffsetX = (((MapTile.TILESIZE * tileRange) )~/2);
 		this.mapOffsetZ = (((MapTile.TILESIZE * tileRange) )~/2);
+	}
+
+	Element makeInfoElement(PioneerMap map) {
+		TableElement el = new TableElement();
+
+		el.addRow()..addCell().innerHtml="World Name"..addCell().innerHtml=this.name;
+		el.addRow()..addCell().innerHtml="Dimension"..addCell().innerHtml="${this.dimension} (${this.dimensionType})";
+
+		String genver = "";
+		if (this.generatorVersion != 0) {
+			genver = " v${this.generatorVersion}";
+		}
+		el.addRow()..addCell().innerHtml="Generator"..addCell().innerHtml="${this.generatorName}$genver";
+		el.addRow()..addCell().innerHtml="Seed"..addCell().innerHtml=this.seed;
+		el.addRow()..addCell().innerHtml="Size"..addCell().innerHtml="${this.tileRange * MapTile.TILESIZE * this.skip}m, ${tileRange}x${tileRange} tiles, ${skip}:1 scale, origin ${offsetX},${offsetZ}";
+
+		return el;
 	}
 }
 

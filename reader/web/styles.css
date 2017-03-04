@@ -41,3 +41,11 @@ html, body {
 
     overflow:auto;
 }
+
+#file {
+    display:none;
+}
+
+#filebutton {
+    cursor:pointer;
+}

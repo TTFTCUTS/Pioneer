@@ -42,6 +42,10 @@ void main() {
 	mapContainer.addEventListener("mousedown", startDrag);
 	window.addEventListener("mousemove", drag);
 	window.addEventListener("mouseup", endDrag);
+
+	querySelector("#filebutton").addEventListener("click", (Event e) {
+		querySelector("#file").click();
+	});
 }
 
 void resizeCanvas(int h, int w) {
