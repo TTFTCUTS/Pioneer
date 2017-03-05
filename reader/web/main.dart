@@ -115,8 +115,7 @@ void drag(MouseEvent e) {
 			..scrollLeft = mapdragx - dragx
 			..scrollTop = mapdragz - dragz;
 
-		window.getSelection().empty();
-		window.getSelection().removeAllRanges();
+		clearSelection();
 	}
 }
 
@@ -180,4 +179,9 @@ void sortTable(TableElement table, int column, Comparator<String> comparator, [b
 			switching = true;
 		}
 	}
+}
+
+void clearSelection() {
+	window.getSelection().empty();
+	window.getSelection().removeAllRanges();
 }

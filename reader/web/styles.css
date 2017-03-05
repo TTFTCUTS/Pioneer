@@ -7,9 +7,76 @@ html, body {
     padding: 0;
     font-family: 'Roboto', sans-serif;
     position:relative;
+    font-size: 12px;
 
     background-color:#232025;
     cursor:"default";
+}
+
+h2 {
+    font-size: 14px;
+    font-weight:bold;
+    border-bottom: 1px solid #666468;
+}
+
+table {
+    width:100%;
+    border-collapse:collapse;
+}
+
+table.biometable td {
+    vertical-align:top;
+}
+
+table.biometable tr > td:last-child {
+    width:32px;
+}
+
+table.biometable tr > td:first-child {
+    width:14px;
+}
+
+tr {
+    border-bottom: 1px solid #99979b;
+}
+tr:last-child {
+    border-bottom: none;
+}
+
+td {
+    padding:5px 0 3px 0px;
+}
+
+.biomesmore {
+    cursor:pointer;
+    width:11px;
+    height:11px;
+    border:1px solid #99979b;
+    box-sizing:border-box;
+}
+
+.biomesmore > div {
+    position:relative;
+    padding:0px 0px 0px 1px;
+    top:-2px;
+    color: #666468;
+}
+
+div.biomeinfo {
+    margin:6px 0px 0px 0px;
+    width:185px;
+}
+
+.biomedata {
+    margin:6px 0px 0px 0px;
+    width:130px;
+    border:1px solid #99979b;
+    box-shadow:1px 1px 1px rgba(0,0,0,0.1);
+}
+
+canvas.swatch {
+    box-shadow:0px 0px 1px 1px rgba(0,0,0,0.1);
+    cursor:pointer;
 }
 
 #canvas {
@@ -48,4 +115,13 @@ html, body {
 
 #filebutton {
     cursor:pointer;
+}
+
+.biomedata td:first-child {
+    width:55px !important;
+    padding-left:3px;
+}
+
+.biomedata td:last-child {
+    width:65px !important;
 }

@@ -6,6 +6,8 @@ class PioneerMap {
 	MapInfo mapInfo;
 	BiomeInfo biomeInfo;
 
+	List<Biome> highlights = [];
+
 	List<MapTile> tiles;
 
 	int xpos = 0;
@@ -91,7 +93,7 @@ class PioneerMap {
 			for (int z = zlower; z<zupper; z++) {
 				int id = z * this.mapInfo.tileRange + x;
 
-				tiles[id].draw(canvas, MapTile.TILESIZE * x + this.xpos, MapTile.TILESIZE * z + this.zpos, this.biomeInfo);
+				tiles[id].draw(canvas, MapTile.TILESIZE * x + this.xpos, MapTile.TILESIZE * z + this.zpos, this.biomeInfo, this.highlights);
 				//t++;
 			}
 		}
@@ -128,6 +130,36 @@ class PioneerMap {
 		int tz = z - this.zpos - c.y * MapTile.TILESIZE;
 
 		return tile.getBiome(tx,tz, this.biomeInfo);
+	}
+
+	void setHighlights([dynamic highlight = null]) {
+		this.highlights.clear();
+		if (highlight is Iterable<Biome>) {
+			this.highlights.addAll(highlight);
+		} else if (highlight is Biome) {
+			this.highlights.add(highlight);
+		}
+	}
+
+	void toggleHighlights(dynamic highlight) {
+		bool equals = false;
+
+		if (highlight is Iterable<Biome>) {
+			if(this.highlights.length == highlight.length && this.highlights.toSet().containsAll(highlight)) {
+				equals = true;
+			}
+		} else if (highlight is Biome) {
+			if (this.highlights.length == 1 && this.highlights[0] == highlight) {
+				equals = true;
+			}
+		}
+
+		if (equals) {
+			this.setHighlights();
+		} else {
+			this.setHighlights(highlight);
+		}
+		this.draw();
 	}
 }
 
@@ -183,7 +215,7 @@ class MapInfo {
 		}
 		el.addRow()..addCell().innerHtml="Generator"..addCell().innerHtml="${this.generatorName}$genver";
 		el.addRow()..addCell().innerHtml="Seed"..addCell().innerHtml=this.seed;
-		el.addRow()..addCell().innerHtml="Size"..addCell().innerHtml="${this.tileRange * MapTile.TILESIZE * this.skip}m, ${tileRange}x${tileRange} tiles, ${skip}:1 scale, origin ${offsetX},${offsetZ}";
+		el.addRow()..addCell().innerHtml="Size"..addCell().innerHtml="${this.tileRange * MapTile.TILESIZE * this.skip}m, ${skip}:1 scale<br/>${tileRange}x${tileRange} tiles, origin ${offsetX},${offsetZ}";
 
 		return el;
 	}
@@ -247,7 +279,7 @@ class BiomeInfo {
 
 	Element makeBiomeElement(PioneerMap map) {
 		DivElement div = new DivElement();
-		TableElement element = new TableElement();
+		TableElement element = new TableElement()..className="biometable";
 
 		int divisor = map.mapInfo.tileRange * MapTile.TILESIZE;
 		divisor *= divisor;
@@ -257,12 +289,80 @@ class BiomeInfo {
 
 			TableRowElement row = element.addRow();
 
-			row.addCell()..innerHtml = "${b.id}";
-			row.addCell()..innerHtml = "${b.name}";
-			row.addCell()..innerHtml = "${((stats.count / divisor) * 100).toStringAsFixed(2)}%";
+			Element c = row.addCell();
+
+			Element box = b.makeSwatch(11)..style.marginTop="1px"..addEventListener("click", (Event e){
+				if (map != null) {
+					map.toggleHighlights(stats.subcounts.keys);
+				}
+			});
+
+			c.append(box);
+
+			DivElement moreinfo = new DivElement()..className="biomeinfo"..style.display="none";
+
+			// sub info
+
+			TableElement subinfo = new TableElement()..className="biomesubinfo";
+
+			for (Biome sb in stats.subcounts.keys) {
+				TableRowElement subrow = subinfo.addRow();
+
+				subrow.addCell().append(sb.makeSwatch(11)..addEventListener("click", (Event e){
+					if (map != null) {
+						map.toggleHighlights(sb);
+					}
+				}));
+
+				TableCellElement datacell = subrow.addCell();
+				datacell.innerHtml = sb.name;
+
+				TableElement databox = new TableElement()..className="biomedata";
+
+				databox.addRow()..addCell().innerHtml="ID"..addCell().innerHtml="${sb.id}";
+				databox.addRow()..addCell().innerHtml="Temp."..addCell().innerHtml=sb.temperature.toStringAsFixed(3);
+				databox.addRow()..addCell().innerHtml="Moisture"..addCell().innerHtml=sb.moisture.toStringAsFixed(3);
+				databox.addRow()..addCell().innerHtml="Height"..addCell().innerHtml="${sb.baseHeight.toStringAsFixed(3)} &plusmn; ${sb.heightVariation.toStringAsFixed(3)}";
+				databox.addRow()..addCell().innerHtml="Rains?"..addCell().innerHtml=sb.canRain ? "Yes" : "No";
+				databox.addRow()..addCell().innerHtml="Snowy?"..addCell().innerHtml=sb.snowy ? "Yes" : "No";
+
+				subrow.addCell().innerHtml = "${((stats.subcounts[sb] / divisor) * 100).toStringAsFixed(2)}%";
+
+				datacell.append(databox);
+			}
+
+			sortTable(subinfo, 2, compare_percent);
+
+			moreinfo.append(subinfo);
+
+			// end sub info
+
+			row.addCell()..style.width="185px"..innerHtml = "${b.name}"..append(moreinfo);
+
+			Element morebutton = new DivElement()..className="biomesmore";
+
+			Element symbol = new DivElement()..innerHtml="+";
+			morebutton.append(symbol);
+
+			row.addCell().append(morebutton);
+
+			row.addCell()..className="percent"..innerHtml = "${((stats.count / divisor) * 100).toStringAsFixed(2)}%";
+
+			morebutton.addEventListener("click", (Event e){
+				if (moreinfo.style.display == "none") {
+					moreinfo.style.display = "block";
+					symbol.innerHtml = "&minus;";
+				} else {
+					moreinfo.style.display = "none";
+					symbol.innerHtml = "+";
+				}
+				clearSelection();
+				e.preventDefault();
+			});
+
 		}
 
-		sortTable(element, 2, compare_percent);
+		sortTable(element, 3, compare_percent);
 
 		div.append(element);
 		div.append(new SpanElement()..innerHtml = "Mutations: ${mutationRate.toStringAsFixed(3)}%");
@@ -316,8 +416,8 @@ class Biome {
 
 		this.parseColour();
 
-		print("$id - $name: temp: $temperature, moisture: $moisture, height: $baseHeight~$heightVariation, rain: $canRain, snow: $snowy");
-		print("Mutation: $mutation , of $mutationOf");
+		//print("$id - $name: temp: $temperature, moisture: $moisture, height: $baseHeight~$heightVariation, rain: $canRain, snow: $snowy");
+		//print("Mutation: $mutation , of $mutationOf");
 	}
 
 	void parseColour() {
@@ -334,22 +434,52 @@ class Biome {
 		//print("red: ${col & 0xFF0000} >> 16 = ${(col & 0xFF0000) >> 16}");
 	}
 
-	List<int> fillColour(int x, int z) {
+	List<int> fillColour(int x, int z, [bool bright = true]) {
+		int r = red;
+		int g = green;
+		int b = blue;
+
 		if (this.mutation) {
 			if ((x+z) % 4 == 0) { //((x+z)~/2) %2 == 0
 				Biome mof = this.parent.biomes[this.mutationOf];
 
-				int r = 255 - mof.red;//(mof.red * BRIGHTEN).clamp(0,255).floor();
-				int g = 255 - mof.green;//(mof.green * BRIGHTEN).clamp(0,255).floor();
-				int b = 255 - mof.blue;//(mof.blue * BRIGHTEN).clamp(0,255).floor();
-
-				return [r,g,b];
-
-				//return [255,0,0];
+				r = 255 - mof.red;//(mof.red * BRIGHTEN).clamp(0,255).floor();
+				g = 255 - mof.green;//(mof.green * BRIGHTEN).clamp(0,255).floor();
+				b = 255 - mof.blue;//(mof.blue * BRIGHTEN).clamp(0,255).floor();
 			}
 		}
 
-		return [red,green,blue];
+		if (!bright) {
+			r ~/= 5;
+			g ~/= 5;
+			b ~/= 5;
+		}
+
+		return [r,g,b];
+	}
+
+	Element makeSwatch(int size) {
+		CanvasElement swatch = new CanvasElement(width:size,height:size)..className="swatch";
+		var s = swatch.context2D;
+
+		ImageData data = s.getImageData(0,0,size,size);
+
+		for (int x=0; x<size; x++) {
+			for (int z=0; z<size; z++) {
+				int index = (z * size + x) * 4;
+
+				List<int> col = this.fillColour(x,z);
+
+				data.data[index] = col[0];
+				data.data[index+1] = col[1];
+				data.data[index+2] = col[2];
+				data.data[index+3] = 255;
+			}
+		}
+
+		s.putImageData(data,0,0);
+
+		return swatch;
 	}
 }
 
@@ -364,7 +494,7 @@ class MapTile {
 
 	}
 
-	void draw(CanvasRenderingContext2D canvas, int ox, int oz, BiomeInfo biomes) {
+	void draw(CanvasRenderingContext2D canvas, int ox, int oz, BiomeInfo biomes, List<Biome> highlights) {
 		ImageData img = canvas.getImageData(ox,oz,TILESIZE,TILESIZE);
 
 		//print("############################");
@@ -375,7 +505,7 @@ class MapTile {
 				int id = this.data[index];
 				Biome b = biomes.biomes[id];
 
-				var col = b.fillColour(x,z);
+				var col = b.fillColour(x,z, highlights.isEmpty || highlights.contains(b));
 
 				img.data[index] = col[0];
 				img.data[index+1] = col[1];
