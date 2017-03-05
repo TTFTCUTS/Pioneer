@@ -16,19 +16,29 @@
             <div id="left">
 
                 <canvas id="canvas" width="5" height="5"></canvas>
+
+                <div id="overlay"><div id="overlaytext">Loading...</div></div>
             </div>
             <div id="right">
+                <div id="logo">
+                    <img src="logo.png"/>
+                </div>
+
                 <input type="file" id="file"/>
                 <div id="filebutton">Open Map</div>
 
                 <h2>Pointer Info:</h2>
-                <div id="output" class="sidebox"></div>
+                <div id="output" class="sidebox">
+                    <span id="coordinates">N/A</span>
+                    <br/>
+                    <span id="biome">Unknown</span>
+                </div>
 
                 <h2>Map Info:</h2>
-                <div id="mapinfo" class="sidebox"></div>
+                <div id="mapinfo" class="sidebox">No map loaded</div>
 
                 <h2>Biome Info:</h2>
-                <div id="stats" class="sidebox"></div>
+                <div id="stats" class="sidebox">No map loaded</div>
             </div>
         </div>
     </body>

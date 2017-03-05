@@ -65,13 +65,11 @@ class PioneerMap {
 
 		Biome b = this.getBiome(e.offset.x,e.offset.y);
 
-		String info = "$wx, $wz";
+		setOutputCoords(wx,wz,b);
+	}
 
-		if (b != null) {
-			info += "<br/>${b.name}";
-		}
-
-		querySelector("#output").innerHtml= info;
+	void doubleClick(MouseEvent e) {
+		this.toggleHighlights(this.getBiome(e.offset.x, e.offset.y));
 	}
 
 	draw() {

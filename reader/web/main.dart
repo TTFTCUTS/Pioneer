@@ -37,6 +37,16 @@ void main() {
 		}
 	});
 
+	canvasElement.addEventListener("mouseout", (MouseEvent e) {
+		setOutputCoords();
+	});
+
+	canvasElement.addEventListener("dblclick", (MouseEvent e) {
+		if (map != null) {
+			map.doubleClick(e);
+		}
+	});
+
 	window.addEventListener("resize", resizeWindow);
 
 	mapContainer.addEventListener("mousedown", startDrag);
@@ -46,6 +56,10 @@ void main() {
 	querySelector("#filebutton").addEventListener("click", (Event e) {
 		querySelector("#file").click();
 	});
+
+	querySelector("#overlaytext")..addEventListener("click", (Event e) {
+		querySelector("#file").click();
+	})..innerHtml="Click here or under the logo<br/>to load a .pioneer map.<br/><br/><span id='help'>Once rendered in-game, map files can be found in the pioneer subdirectory of the main Minecraft folder.<br/><br/>Click and drag on the map to scroll, double-click on the map or click the colour swatches next to the biome names to toggle highlighting.</span>"..style.cursor="pointer";
 }
 
 void resizeCanvas(int h, int w) {
@@ -133,6 +147,8 @@ void loadMapFile(Event e) {
 	reader.readAsArrayBuffer(file);
 
 	reader.addEventListener("load", (ProgressEvent fe){
+		querySelector("#overlay").style.display="none";
+
 		FileReader r = fe.target;
 
 		Archive a = new ZipDecoder().decodeBytes(r.result);
@@ -184,4 +200,19 @@ void sortTable(TableElement table, int column, Comparator<String> comparator, [b
 void clearSelection() {
 	window.getSelection().empty();
 	window.getSelection().removeAllRanges();
+}
+
+void setOutputCoords([int x, int z, Biome b]) {
+	Element coords = querySelector("#coordinates");
+	Element biome = querySelector("#biome");
+	if (b == null) {
+		coords.innerHtml = "N/A";
+		biome.innerHtml = "Unknown";
+	} else {
+		coords.innerHtml = "x: $x z: $z";
+		biome
+			..innerHtml = ""
+			..append(b.makeSwatch(12)..style.marginRight="6px")
+			..appendText(b.name);
+	}
 }
