@@ -13,6 +13,10 @@ html, body {
     cursor:"default";
 }
 
+div {
+    position:relative;
+}
+
 h2 {
     font-size: 14px;
     font-weight:bold;
@@ -100,6 +104,10 @@ canvas.swatch {
 }
 
 #right {
+    flex-grow: 0;
+    flex-shrink: 0;
+    flex-basis:300px;
+
     width:300px;
     background-color:#bbb9bd;
     height:100%;
@@ -108,6 +116,8 @@ canvas.swatch {
     padding:10px;
 
     overflow:auto;
+
+    border-left:1px solid #232025;
 }
 
 #file {
@@ -186,4 +196,33 @@ canvas.swatch {
 #help {
     font-size:14px;
     font-weight:default;
+}
+
+textarea {
+    width:100%;
+    resize:vertical;
+}
+
+#detailsbutton {
+    cursor:pointer;
+    font-weight:bold;
+    text-align:center;
+    margin-top:5px;
+}
+
+#detailsbox {
+    margin-top:8px;
+}
+
+a, a:visited {
+    color: #c92828;
+    text-decoration:none;
+}
+
+a:hover {
+    color: #ff5757;
+}
+
+a:active {
+    color: #FFFFFF;
 }

@@ -97,13 +97,6 @@ void startDrag(MouseEvent e) {
 	dragging = true;
 	dragx = 0;
 	dragz = 0;
-	/*if (map != null) {
-		mapdragx = map.xpos;
-		mapdragz = map.zpos;
-	} else {
-		mapdragx = 0;
-		mapdragz = 0;
-	}*/
 
 	mapdragx = mapContainer.scrollLeft + e.client.x;
 	mapdragz = mapContainer.scrollTop + e.client.y;
@@ -133,6 +126,12 @@ void drag(MouseEvent e) {
 	}
 }
 
+void centre() {
+	mapContainer
+		..scrollLeft = max(0,(mapContainer.scrollWidth - mapContainer.clientWidth) ~/2)
+		..scrollTop = max(0,(mapContainer.scrollHeight - mapContainer.clientHeight) ~/2);
+}
+
 void loadMapFile(Event e) {
 	FileUploadInputElement fin = e.target as FileUploadInputElement;
 	File file = fin.files[0];
@@ -147,13 +146,40 @@ void loadMapFile(Event e) {
 	reader.readAsArrayBuffer(file);
 
 	reader.addEventListener("load", (ProgressEvent fe){
-		querySelector("#overlay").style.display="none";
+
 
 		FileReader r = fe.target;
 
-		Archive a = new ZipDecoder().decodeBytes(r.result);
+		Archive archive = null;
 
-		mapSetup(a);
+		try {
+			archive = new ZipDecoder().decodeBytes(r.result);
+
+			mapSetup(archive);
+
+			querySelector("#overlay").style.display="none";
+		} catch(ex, trace) {
+
+			//print(ex);
+			//print(trace);
+
+			String message = "Something went wrong!<br/>If you are sure that the chosen file is a valid map, then please report the issue.";
+
+			if (ex is ArchiveException) {
+				message = "The chosen map file could not be unpacked correctly. Please make sure that it is a valid Pioneer map.<br/>If it was and something is still going wrong, please report the issue.";
+			}
+
+			querySelector("#overlaytext")
+				..setInnerHtml("$ex<br/><br/><span id='help'>$message<br/><br/>")
+				..append(new AnchorElement(href:"https://github.com/TTFTCUTS/Pioneer/issues")
+					..text="Pioneer GitHub issue tracker"
+					..target="_blank"
+					..addEventListener("click", (e) => e.stopPropagation()
+				)
+			);
+
+			return;
+		}
 	});
 }
 
@@ -168,6 +194,10 @@ void mapSetup(Archive archive) {
 
 	resizeWindow();
 	redraw();
+
+	centre();
+
+	querySelectorAll("textarea").forEach((e) => scaleTextArea(e));
 }
 
 void sortTable(TableElement table, int column, Comparator<String> comparator, [bool reversed = false]) {
@@ -215,4 +245,42 @@ void setOutputCoords([int x, int z, Biome b]) {
 			..append(b.makeSwatch(12)..style.marginRight="6px")
 			..appendText(b.name);
 	}
+}
+
+void scaleTextArea(TextAreaElement e) {
+	int w = 38; // textbox width, fixed
+	int h = 0; // textbox height to be set to this many lines
+
+	//print("textbox:");
+
+	List<String> lines = e.value.split("\n");
+
+	for(int i=0; i<lines.length; i++) {
+		h++;
+
+		//print("line ${i+1}: h=$h");
+
+		List<String> words = lines[i].split(" ");
+
+		int ll = 0; // current line length
+
+		for (int j=0; j<words.length; j++) {
+			int l = words[j].length + 1; // current word + space length
+			if (ll > 0 && ll + l > w) {
+				h++;
+				ll = 0;
+			}
+			ll += l;
+			while (ll > w) {
+				ll -= w;
+				h++;
+			}
+
+			//print("word ${j+1}, l=$l, ll=$ll, h=$h");
+		}
+	}
+
+	//print("final h=$h");
+
+	e.style.height = "${h.clamp(1,10) * 15 + 1}px";
 }

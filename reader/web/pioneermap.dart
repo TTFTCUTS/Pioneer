@@ -17,6 +17,10 @@ class PioneerMap {
 		ArchiveFile mapinfofile = archive.findFile("map.json");
 		ArchiveFile biomeinfofile = archive.findFile("biomes.json");
 
+		if (mapinfofile == null || biomeinfofile == null) {
+			throw new ArchiveException("Could not find map information files");
+		}
+
 		var mapinfo = JSON.decode(UTF8.decode(mapinfofile.content));
 		var biomeinfo = JSON.decode(UTF8.decode(biomeinfofile.content));
 
@@ -73,7 +77,6 @@ class PioneerMap {
 	}
 
 	draw() {
-		//this.moveTo(this.xpos, this.zpos);
 		int n = this.mapInfo.tileRange;
 
 		int size = n * MapTile.TILESIZE;
@@ -95,7 +98,6 @@ class PioneerMap {
 				//t++;
 			}
 		}
-		//print("tiles drawn: $t");
 	}
 
 	Point<int> getTileCoords(int x, int z) {
@@ -193,15 +195,17 @@ class MapInfo {
 		this.jobSize = mapjson["jobsize"];
 		this.tileRange = mapjson["tilerange"];
 
-		print("$name (dim $dimension, $dimensionType, $generatorName v$generatorVersion), seed: $seed");
-		print("$jobSize tiles, $tileRange x $tileRange (radius $radius, scale $skip)");
-		print("origin offset: $offsetX,$offsetZ");
+		//print("$name (dim $dimension, $dimensionType, $generatorName v$generatorVersion), seed: $seed");
+		//print("$jobSize tiles, $tileRange x $tileRange (radius $radius, scale $skip)");
+		//print("origin offset: $offsetX,$offsetZ");
 
 		this.mapOffsetX = (((MapTile.TILESIZE * tileRange) )~/2);
 		this.mapOffsetZ = (((MapTile.TILESIZE * tileRange) )~/2);
 	}
 
 	Element makeInfoElement(PioneerMap map) {
+		DivElement infobox = new DivElement();
+
 		TableElement el = new TableElement();
 
 		el.addRow()..addCell().innerHtml="World Name"..addCell().innerHtml=this.name;
@@ -215,7 +219,39 @@ class MapInfo {
 		el.addRow()..addCell().innerHtml="Seed"..addCell().innerHtml=this.seed;
 		el.addRow()..addCell().innerHtml="Size"..addCell().innerHtml="${this.tileRange * MapTile.TILESIZE * this.skip}m, ${skip}:1 scale<br/>${tileRange}x${tileRange} tiles, origin ${offsetX},${offsetZ}";
 
-		return el;
+		infobox.append(el);
+
+		Element more = new DivElement()..innerHtml="More"..id="detailsbutton";
+
+		infobox.append(more);
+
+		Element morebox = new DivElement()..style.display="none"..id = "detailsbox";
+
+		String command = "/pioneer ${this.radius}";
+		if (this.skip != 1) {
+			command += " $skip";
+		}
+		command += " $offsetX $offsetZ";
+
+		morebox
+			..append(new SpanElement()..innerHtml="Command:")
+			..append(new TextAreaElement()..readOnly=true..value=command)
+			..append(new SpanElement()..innerHtml="Generator Options:")
+			..append(new TextAreaElement()..readOnly=true..value=this.generatorOptions);
+
+		infobox.append(morebox);
+
+		more.addEventListener("click", (MouseEvent e){
+			if (morebox.style.display=="none") {
+				morebox.style.display = "block";
+				more.innerHtml = "Less";
+			} else {
+				morebox.style.display = "none";
+				more.innerHtml = "More";
+			}
+		});
+
+		return infobox;
 	}
 }
 
@@ -277,6 +313,10 @@ class BiomeInfo {
 
 	Element makeBiomeElement(PioneerMap map) {
 		DivElement div = new DivElement();
+
+		div.append(new SpanElement()..innerHtml = "Mutation rate: ${(mutationRate * 100.0).toStringAsFixed(3)}%"..title="Mutation biomes are rare biome variants such as Sunflower Plains, Flower Forest or Mesa Bryce. Mutations are grouped with their parent biome in the list below.");
+		div..append(new BRElement())..append(new BRElement());
+
 		TableElement element = new TableElement()..className="biometable";
 
 		int divisor = map.mapInfo.tileRange * MapTile.TILESIZE;
@@ -363,7 +403,6 @@ class BiomeInfo {
 		sortTable(element, 3, compare_percent);
 
 		div.append(element);
-		div.append(new SpanElement()..innerHtml = "Mutations: ${mutationRate.toStringAsFixed(3)}%");
 
 		return div;
 	}
