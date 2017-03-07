@@ -217,7 +217,7 @@ class MapInfo {
 		}
 		el.addRow()..addCell().innerHtml="Generator"..addCell().innerHtml="${this.generatorName}$genver";
 		el.addRow()..addCell().innerHtml="Seed"..addCell().innerHtml=this.seed;
-		el.addRow()..addCell().innerHtml="Size"..addCell().innerHtml="${this.tileRange * MapTile.TILESIZE * this.skip}m, ${skip}:1 scale<br/>${tileRange}x${tileRange} tiles, origin ${offsetX},${offsetZ}";
+		el.addRow()..addCell().innerHtml="Size"..addCell().innerHtml="${this.tileRange * MapTile.TILESIZE * this.skip}m, 1:${skip} scale<br/>${tileRange}x${tileRange} tiles, origin ${offsetX},${offsetZ}";
 
 		infobox.append(el);
 
