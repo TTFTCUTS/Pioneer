@@ -103,3 +103,11 @@ hr {
 	font-size:80%;
 	color: #565057;
 }
+
+#screen {
+	display:block;
+	width:50%;
+	margin:10px auto 20px auto;
+	box-shadow:3px 3px 1px rgba(0,0,0,0.4);
+	border:1px solid #131015;
+}
