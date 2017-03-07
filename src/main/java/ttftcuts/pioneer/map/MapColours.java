@@ -33,6 +33,7 @@ import java.util.Random;
 
 public class MapColours {
     public static MapColours instance;
+    public static final int SAMPLE_RADIUS = 40;
 
     public Map<IBlockState, Integer> blockColours = new HashMap<IBlockState, Integer>();
     public Map<Biome, Integer> biomeColours = new HashMap<Biome, Integer>();
@@ -122,15 +123,15 @@ public class MapColours {
             Method grass = ReflectionUtil.<Biome>findMethod(biome, grassColourMethod, grassColourArgs);
             grassOverridden = grass.getDeclaringClass() != Biome.class;
 
-            Pioneer.logger.info(biome.getClass()+" declaring class of block method: "+ top.getDeclaringClass() +", grass method: "+grass.getDeclaringClass());
+            //Pioneer.logger.info(biome.getClass()+" declaring class of block method: "+ top.getDeclaringClass() +", grass method: "+grass.getDeclaringClass());
         } catch (Exception e) {
             e.printStackTrace();
         }
 
         if (topOverridden || grassOverridden) {
-            Pioneer.logger.info(biome.getBiomeName() +" overrides:  top block: "+topOverridden+", grass colour: "+grassOverridden);
+            //Pioneer.logger.info(biome.getBiomeName() +" overrides:  top block: "+topOverridden+", grass colour: "+grassOverridden);
 
-            int rad = 50;
+            int rad = SAMPLE_RADIUS;
             int size = (rad*2+1);
             int divisor = size*size;
 

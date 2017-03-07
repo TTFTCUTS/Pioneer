@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>Pioneer Terrain Survey</title>
+		
+		<link rel="stylesheet" href="style.css"/>
+		
+		<script type="text/javascript">
+		
+			function load() {
+				window.addEventListener("resize", resize);
+				
+				resize();
+			}
+			
+			function resize(e) {
+				if (window.clientWidth > 2160 || window.clientHeight > 1440) {
+					document.body.style.backgroundImage = "url(mapbg4k.png)";
+				} else {
+					document.body.style.backgroundImage = "url(mapbg.png)";
+				}
+			}
+		
+		</script>
+		
+	</head>
+	<body onload="load()">
+		<div class="content">
+			<img id="logo" src="logo.png"/>
+			<h1>Pioneer Terrain Survey</h1>
+			<p>Having trouble finding your favourite biome to set up your base? Wondering which way to travel to reach the ocean, or which way to a mushroom island? Developing a terrain mod and need to know how things are laid out at a large scale without spending hours exploring? Pioneer is for you.</p>
+			<p>Pioneer is a single-player only utility mod which facilitates the mapping of biomes in the world via a chat command. It cannot be used with dedicated servers as it relies on graphics code which is not loaded on the server side - <em>if you want to map a server world, you should get the world seed and create a local version</em> instead. It won't crash a dedicated servers if included in a pack though, as it is explicitly not loaded by them.</p>
+			
+			<hr/>
+			
+			<h2><a href="reader/">&gt; &gt; Online Map Viewer &lt; &lt;</a></h2>
+			<p>Maps generated with Pioneer are read by loading them into the web-based viewer. Lots of information is available with each map, such as the seed and generator used for the world, as well as any generator options for world types which use them. A break down of biome distribution is also available, and biomes can be highligted on the map by clicking their colour swatches or double-clicking on them in the map.</p>
+			
+			<p>The reader can also be downloaded for local use <a href="reader.zip">here</a>. It is identical to the one used on the page linked above.
+			
+			<h3>Example Maps</h3>
+			<ul>
+				<li><a href="reader/?map=../maps/vanilla_desert.pioneer" target="_blank">4:1 Vanilla desert</a></li>
+				<li><a href="reader/?map=../maps/vanilla_closeup.pioneer" target="_blank">Desert close-up at 1000, -1000</a></li>
+				<li><a href="reader/?map=../maps/mountain_madness.pioneer" target="_blank">Mountain Madness customised world</a></li>
+				<li><a href="reader/?map=../maps/huge.pioneer" target="_blank">HUGE vanilla render [WARNING: may take a long time]</a></li>
+				<li><a href="reader/?map=../maps/atg_release.pioneer" target="_blank">ATG 2.0.0 release</a></li>
+			</ul>
+			
+			<hr/>
+			
+			<h2><a href="https://mods.curse.com/mc-mods/minecraft/262302-pioneer-terrain-survey" target="_blank">&gt; &gt; Download Mod &lt; &lt;</a></h2>
+			<p>The /pioneer command <em>requires op status or for cheats to be enabled</em> and takes several arguments, some optional:</p>
+			<p id="command"><span title="Main command">/pioneer</span> <span title="Radius OR stop">&lt;radius&gt;|stop</span> <span title="Scale (Optional)">[&lt;scale&gt;]</span> <span title="Origin coordinates (Optional)">[&lt;centerX&gt; &lt;centerZ&gt;]</span></p>
+			<ul>
+				<li><em>Radius</em>: This is the radius in blocks to render. Takes scale into account, so scale 2 would make a map half the size along each side.</li>
+				<li><em>Stop</em>: When used alone instead of radius, will cancel currently running jobs.</li>
+				<li><em>Scale</em>: Renders only every &lt;scale&gt; blocks, to cover larger areas with smaller maps. 16 is one pixel in the final map per chunk, for example. Defaults to 1 when omitted.</li>
+				<li><em>CenterX</em> and <em>CenterZ</em>: The coordinates to use as the centre of the map. Must be used together or not at all. Default to current player position if omitted.</li>
+			</ul>
+			
+			<br/><br/><br/>
+			<p id="credits">Pioneer, the site, and all the stuff in it were written by TTFTCUTS, March 2017</p><br/>
+		</div>
+	</body>
+</html>

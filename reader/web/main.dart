@@ -16,6 +16,7 @@ CanvasRenderingContext2D canvas;
 
 PioneerMap map;
 DivElement mapContainer;
+Element overlayText;
 bool dragging = false;
 int dragx = 0;
 int dragz = 0;
@@ -25,7 +26,7 @@ int mapdragz = 0;
 void main() {
 	Element filepicker = querySelector("#file");
 
-	filepicker.addEventListener("change", loadMapFile);
+	filepicker.addEventListener("change", loadMapFromFile);
 
 	canvasElement = querySelector("#canvas");
 	canvas = canvasElement.context2D;
@@ -57,9 +58,19 @@ void main() {
 		querySelector("#file").click();
 	});
 
-	querySelector("#overlaytext")..addEventListener("click", (Event e) {
+	overlayText = querySelector("#overlaytext");
+
+	overlayText..addEventListener("click", (Event e) {
 		querySelector("#file").click();
-	})..innerHtml="Click here or under the logo<br/>to load a .pioneer map.<br/><br/><span id='help'>Once rendered in-game, map files can be found in the pioneer subdirectory of the main Minecraft folder.<br/><br/>Click and drag on the map to scroll, double-click on the map or click the colour swatches next to the biome names to toggle highlighting.</span>"..style.cursor="pointer";
+	});
+
+	Map<String,String> args = Uri.base.queryParameters;
+
+	if (args.containsKey("map")) {
+		loadMapFromUrl(args["map"]);
+	} else {
+		overlayText..innerHtml="Click here or under the logo<br/>to load a .pioneer map.<br/><br/><span id='help'>Once rendered in-game, map files can be found in the pioneer subdirectory of the main Minecraft folder.<br/><br/>Click and drag on the map to scroll, double-click on the map or click the colour swatches next to the biome names to toggle highlighting.</span>"..style.cursor="pointer";
+	}
 }
 
 void resizeCanvas(int h, int w) {
@@ -132,7 +143,7 @@ void centre() {
 		..scrollTop = max(0,(mapContainer.scrollHeight - mapContainer.clientHeight) ~/2);
 }
 
-void loadMapFile(Event e) {
+void loadMapFromFile(Event e) {
 	FileUploadInputElement fin = e.target as FileUploadInputElement;
 	File file = fin.files[0];
 
@@ -146,41 +157,77 @@ void loadMapFile(Event e) {
 	reader.readAsArrayBuffer(file);
 
 	reader.addEventListener("load", (ProgressEvent fe){
-
-
 		FileReader r = fe.target;
 
-		Archive archive = null;
+		loadMapData(r.result);
+	});
+}
 
-		try {
-			archive = new ZipDecoder().decodeBytes(r.result);
+void loadMapFromUrl(String url) {
 
-			mapSetup(archive);
+	print(url);
 
-			querySelector("#overlay").style.display="none";
-		} catch(ex, trace) {
+	HttpRequest.request(url, responseType: "arraybuffer").then((HttpRequest r) {
+		ByteBuffer bytes = r.response;
 
-			//print(ex);
-			//print(trace);
+		loadMapData(bytes.asUint8List());
+	}).catchError((ex){
 
-			String message = "Something went wrong!<br/>If you are sure that the chosen file is a valid map, then please report the issue.";
+		String title = ex.toString();
+		String message = "Something went wrong!<br/>And it has something to do with the message up there.";
+		bool link = true;
 
-			if (ex is ArchiveException) {
-				message = "The chosen map file could not be unpacked correctly. Please make sure that it is a valid Pioneer map.<br/>If it was and something is still going wrong, please report the issue.";
-			}
+		if (ex is Event) {
+			HttpRequest r = ex.target;
+			String response = r.statusText;
+			int status = r.status;
 
-			querySelector("#overlaytext")
-				..setInnerHtml("$ex<br/><br/><span id='help'>$message<br/><br/>")
-				..append(new AnchorElement(href:"https://github.com/TTFTCUTS/Pioneer/issues")
-					..text="Pioneer GitHub issue tracker"
-					..target="_blank"
-					..addEventListener("click", (e) => e.stopPropagation()
+			title = "$status ($response)";
+			message = "Failed to get the requested url.";
+			link = false;
+		}
+
+		errorMessage(title, message, link);
+	});
+}
+
+void loadMapData(List<int> data) {
+	Archive archive = null;
+
+	try {
+		archive = new ZipDecoder().decodeBytes(data);
+
+		mapSetup(archive);
+
+		querySelector("#overlay").style.display="none";
+	} catch(ex, trace) {
+
+		String message = "Something went wrong!<br/>If you are sure that the chosen file is a valid map, then please report the issue.";
+
+		if (ex is ArchiveException) {
+			message = "The chosen map file could not be unpacked correctly. Please make sure that it is a valid Pioneer map.<br/>If it was and something is still going wrong, please report the issue.";
+		}
+
+		errorMessage(ex.toString(), message);
+
+		return;
+	}
+}
+
+void errorMessage(String title, String message, [bool link = true]) {
+	overlayText
+		..setInnerHtml("$title<br/><br/><span id='help'>$message");
+
+	if (link) {
+		overlayText
+			..appendHtml("<br/><br/>")
+			..append(new AnchorElement(href: "https://github.com/TTFTCUTS/Pioneer/issues")
+				..text = "Pioneer GitHub issue tracker"
+				..target = "_blank"
+				..addEventListener("click", (e) => e.stopPropagation()
 				)
 			);
-
-			return;
-		}
-	});
+	}
 }
 
 void mapSetup(Archive archive) {
