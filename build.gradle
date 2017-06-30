@@ -17,7 +17,7 @@ buildscript {
 apply plugin: 'net.minecraftforge.gradle.forge'
 apply plugin: 'idea'
 
-version = "2.0.0"
+version = "3.0.0"
 group= "ttftcuts.pioneer"
 archivesBaseName = "pioneer"
 
@@ -37,10 +37,10 @@ targetCompatibility = JavaVersion.VERSION_1_8
 // Setup
 ///////////////////////////////////////////////////
 minecraft {
-    version = "1.10.2-12.18.3.2221"
+    version = "1.11.2-13.20.0.2298"
     runDir = "run"
     
-    mappings = "snapshot_20160518"
+    mappings = "stable_32"
     // makeObfSourceJar = false // an Srg named sources jar is made by default. uncomment this to disable.
 }
 

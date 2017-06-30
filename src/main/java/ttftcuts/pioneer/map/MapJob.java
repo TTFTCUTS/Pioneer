@@ -79,7 +79,7 @@ public class MapJob {
         }
 
         this.startTime = new Date().getTime();
-        Minecraft.getMinecraft().thePlayer.addChatMessage(new TextComponentTranslation("commands.pioneer.start", this.jobsize));
+        Minecraft.getMinecraft().player.sendMessage(new TextComponentTranslation("commands.pioneer.start", this.jobsize));
     }
 
     public void process() {
@@ -113,7 +113,7 @@ public class MapJob {
         } else {
             long time = (new Date().getTime() - this.startTime) / 1000;
 
-            Minecraft.getMinecraft().thePlayer.addChatMessage(new TextComponentTranslation("commands.pioneer.finish", this.jobsize, time));
+            Minecraft.getMinecraft().player.sendMessage(new TextComponentTranslation("commands.pioneer.finish", this.jobsize, time));
         }
     }
 
@@ -134,8 +134,8 @@ public class MapJob {
         mapinfo.addProperty("seed", this.world.getWorldInfo().getSeed()+"");
 
         JsonObject generator = new JsonObject();
-        generator.addProperty("name", this.world.getWorldType().getWorldTypeName());
-        generator.addProperty("version", this.world.getWorldType().getGeneratorVersion());
+        generator.addProperty("name", this.world.getWorldType().getName());
+        generator.addProperty("version", this.world.getWorldType().getVersion());
         generator.addProperty("options", this.world.getWorldInfo().getGeneratorOptions());
         mapinfo.add("generator", generator);
 
