@@ -1,25 +1,21 @@
 package ttftcuts.pioneer;
 
-import net.minecraft.client.Minecraft;
 import net.minecraft.command.CommandBase;
 import net.minecraft.command.CommandException;
 import net.minecraft.command.ICommandSender;
 import net.minecraft.command.WrongUsageException;
-import net.minecraft.init.Biomes;
-import net.minecraft.init.Blocks;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.MathHelper;
 import ttftcuts.pioneer.map.MapJob;
 
 public class CommandPioneer extends CommandBase {
     @Override
-    public String getCommandName() {
+    public String getName() {
         return "pioneer";
     }
 
     @Override
-    public String getCommandUsage(ICommandSender sender) {
+    public String getUsage(ICommandSender sender) {
         return "commands.pioneer.usage";
     }
 
@@ -89,4 +85,5 @@ public class CommandPioneer extends CommandBase {
 
         Pioneer.currentJob = new MapJob(sender.getEntityWorld(), ix,iz,iradius,iscale);
     }
+
 }

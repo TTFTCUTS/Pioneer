@@ -43,7 +43,7 @@ public class MapTile {
             for (z = 0; z<Pioneer.TILE_SIZE; z++) {
                 index = z * Pioneer.TILE_SIZE + x;
 
-                provider.loadBlockGeneratorData(biome, this.worldX + x * skip, this.worldZ + z * skip, 1,1);
+                provider.getBiomes(biome, this.worldX + x * skip, this.worldZ + z * skip, 1,1);
                 data.setElem(index, Biome.getIdForBiome(biome[0]));
             }
         }
